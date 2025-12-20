@@ -1,0 +1,104 @@
+{
+	"info": {
+		"_postman_id": "91d9a3b5-9b90-4e6e-8cac-1fa5f8a7bef8",
+		"name": "order-execution-engine",
+		"description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "50862365",
+		"_collection_link": "https://harshitraj21903-3212158.postman.co/workspace/Harshit-Raj's-Workspace~6fab9a7b-8fe1-4bb3-8fb3-85e6c9b25b43/collection/50862365-91d9a3b5-9b90-4e6e-8cac-1fa5f8a7bef8?action=share&source=collection_link&creator=50862365"
+	},
+	"item": [
+		{
+			"name": "create-order",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"orderId returned\", () => {",
+							"  pm.response.to.have.status(200);",
+							"",
+							"  const json = pm.response.json();",
+							"  pm.expect(json).to.have.property(\"orderId\");",
+							"",
+							"  pm.environment.set(\"orderId\", json.orderId);",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"tokenIn\": \"SOL\",\n  \"tokenOut\": \"USDC\",\n  \"amount\": 1\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "/api/orders/execute",
+					"path": [
+						"api",
+						"orders",
+						"execute"
+					]
+				},
+				"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+			},
+			"response": []
+		},
+		{
+			"name": "WebSocket – Order Status Stream (Documentation)",
+			"request": {
+				"method": "OPTIONS",
+				"header": [],
+				"url": {
+					"raw": "ws://localhost:3000/api/orders/ws?orderId={{orderId}}\n",
+					"protocol": "ws",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"orders",
+						"ws"
+					],
+					"query": [
+						{
+							"key": "orderId",
+							"value": "{{orderId}}\n"
+						}
+					]
+				},
+				"description": "### WebSocket Order Status Stream\n\nThis endpoint upgrades an HTTP connection to a WebSocket connection and streams  \nreal-time execution updates for a specific order.\n\n**How to use:**\n\n1. First execute `POST /api/orders/execute`\n    \n2. Copy the returned `orderId`\n    \n3. Connect using:ws://localhost:3000/api/orders/ws?orderId={{orderId}}\n    \n\n**Behavior:**\n\n- Streams order lifecycle updates:\n    \n- routing\n    \n- building\n    \n- confirmed / failed\n    \n- One WebSocket connection per order\n    \n- Designed for real-time monitoring, not state replay\n    \n\n**Note:**  \nPostman does not reliably assert WebSocket message streams.  \nFor live updates, use:\n\n- Browser DevTools\n    \n- `wscat`\n    \n- A frontend client"
+			},
+			"response": []
+		}
+	]
+}
