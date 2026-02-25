@@ -1,17 +1,23 @@
 import IORedis from "ioredis";
 
-const redisConnection = new IORedis({
-  host: "127.0.0.1",
-  port: 6379,
-  maxRetriesPerRequest: null
-});
+let redis: IORedis | null = null;
 
-redisConnection.on("connect", () => {
-  console.log("Redis connected");
-});
+if (process.env.REDIS_HOST) {
+  redis = new IORedis({
+    host: process.env.REDIS_HOST,
+    port: Number(process.env.REDIS_PORT),
+    maxRetriesPerRequest: null
+  });
 
-redisConnection.on("error", (err) => {
-  console.error("Redis connection error", err);
-});
+  redis.on("connect", () => {
+    console.log("Redis connected");
+  });
 
-export default redisConnection;
+  redis.on("error", (err) => {
+    console.error("Redis connection error", err);
+  });
+} else {
+  console.log("Redis disabled (no REDIS_HOST)");
+}
+
+export default redis;

@@ -1,50 +1,30 @@
-import "dotenv/config"; // ✅ MUST be first
-
-import { Worker, Job } from "bullmq";
+import { Worker } from "bullmq";
 import redisConnection from "./redis.connection";
 import { routeOrder } from "../dex/dexRouter";
 import { MockDex } from "../dex/mockDex";
 import { emitStatus } from "../websocket/orders.socket";
 import { updateOrderStatus } from "../db/order.repository";
-import pool from "../db/postgres";
 import { OrderJob } from "../models/order.model";
+
+if (!redisConnection) {
+  console.warn("Redis not available — worker not started");
+  process.exit(0);
+}
 
 const dex = new MockDex();
 
-(async () => {
-  try {
-    await pool.query("SELECT 1");
-    console.log("[Worker][Startup] Database connection established");
-  } catch (err) {
-    console.error(
-      "[Worker][Startup] Failed to connect to database. Shutting down.",
-      err
-    );
-    process.exit(1);
-  }
-})();
-
-
 new Worker<OrderJob>(
   "orders",
-  async (job: Job<OrderJob>) => {
+  async (job) => {
     const { orderId } = job.data;
-    await new Promise((r) => setTimeout(r, 10000));
 
     try {
       emitStatus(orderId, { status: "routing" });
       await updateOrderStatus(orderId, "routing");
 
-      const route = await routeOrder();
+      const route = await routeOrder(orderId);
 
-      console.log(
-        `[Routing] Order ${orderId} → ${route.dex} (price=${route.quote.price})`
-      );
-
-      emitStatus(orderId, {
-        status: "building",
-        dex: route.dex
-      });
+      emitStatus(orderId, { status: "building" });
       await updateOrderStatus(orderId, "building", route.dex);
 
       const tx = await dex.execute(route.dex);
@@ -54,23 +34,17 @@ new Worker<OrderJob>(
         txHash: tx.txHash
       });
 
-      await updateOrderStatus(
-        orderId,
-        "confirmed",
-        route.dex,
-        tx.txHash
-      );
+      await updateOrderStatus(orderId, "confirmed", route.dex, tx.txHash);
     } catch (err) {
-      const error =
-        err instanceof Error ? err.message : "Unknown error";
+      const error = err as Error;
 
       emitStatus(orderId, {
         status: "failed",
-        error
+        error: error.message
       });
 
-      await updateOrderStatus(orderId, "failed");
-      throw err;
+      await updateOrderStatus(orderId, "failed", undefined, undefined, error.message);
+      throw error;
     }
   },
   {
@@ -78,3 +52,5 @@ new Worker<OrderJob>(
     concurrency: 10
   }
 );
+
+console.log("Order worker started");

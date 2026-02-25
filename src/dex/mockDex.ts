@@ -1,6 +1,9 @@
 import { sleep } from "../utils/sleep";
 
 export class MockDex {
+  quote(arg0: string) {
+      throw new Error("Method not implemented.");
+  }
   async raydiumQuote() {
     await sleep(200);
     return { price: 20 * (0.98 + Math.random() * 0.04), fee: 0.003 };
