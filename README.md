@@ -10,7 +10,7 @@ The focus is on backend system design, execution flow, concurrency handling, and
 ### Implemented Order Type: Market Order
 
 A market order executes immediately at the best available price.
-This order type was chosen because it best demonstrates DEX routing, real-time execution flow, and asynchronous processing, which are the core evaluation goals of this task.
+This order type was chosen because it best demonstrates DEX routing, real-time execution flow, and asynchronous processing.
 
 ### Extending to Other Order Types
 
